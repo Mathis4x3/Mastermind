@@ -5,6 +5,13 @@ import time
 import sys
 from pygame.locals import *
 
+from src.controleur.ControleurGen import ControleurGen
+from src.object.Niveaux.Niveau import Niveau
+from src.object.Niveaux.Niveau1 import Niveau1
+from src.object.Niveaux.Niveau2 import Niveau2
+from src.object.Niveaux.Niveau3 import Niveau3
+from src.object.Screen import Screen
+
 pygame.init()
 
 def error(screen):
@@ -25,13 +32,13 @@ def error(screen):
     pygame.display.flip()
 
 #genere le code secret en fonction des parametres
-def genererCode(longueur, niveau):
+def genererCode(longueur):
     couleurs = ['Rg', 'O', 'J', 'Rs', 'B', 'N']
     code_secret = []
     couleurComptage = {}
     temp = False
     comptage = 0
-    if niveau == 3: #les couleurs se répètent car niveau 3
+    if Niveau.getNiveau() == 3: #les couleurs se répètent car niveau 3
         while comptage != 4:
             couleur = random.choice(couleurs)
             if couleur in couleurComptage:
@@ -53,11 +60,11 @@ def genererCode(longueur, niveau):
     print(code_secret)
     return code_secret
 
-def evaluer_proposition(screen, liste, coup, niveau, code_secret):
+def evaluer_proposition(screen, liste, coup, code_secret):
     # si il n'y a pas 4 couleurs dans la proposition du joueur
     if len(liste) != 4:
         error(screen)
-        return niveau
+        return Niveau.getNiveau()
     bien_places = 0
     mal_places = 0
     code_secret1 = list(code_secret)
@@ -101,7 +108,7 @@ def evaluer_proposition(screen, liste, coup, niveau, code_secret):
         bien = fontText.render('4',0,(0,255,0))
     #fait apparaitre les chiffres en fonction du nombre de coup du joueur pour bien les placer
     taille = 60*coup
-    if niveau == 1:
+    if Niveau.getNiveau() == 1:
         screen.blit(mal,(400,620-taille))
         screen.blit(bien,(425,620-taille))
     else:
@@ -111,14 +118,14 @@ def evaluer_proposition(screen, liste, coup, niveau, code_secret):
     pygame.display.flip()
 
     if bien_places == 4:
-        niveau = fin(screen,code_secret,True)
-    return niveau
+        Niveau.setNiveauActuel(fin(screen,code_secret,True))
+    return Niveau.getNiveau()
 
 
 def accueil(screen):
     pygame.display.set_caption('Mastermind : Menu')
     fond = (255,255,255)
-    bouton = pygame.image.load('bouton.png')
+    bouton = pygame.image.load('ressources/img/bouton.png')
     bouton = pygame.transform.scale(bouton,(170,80))
 
     titre = pygame.font.SysFont('impact', 40)
@@ -154,32 +161,32 @@ def accueil(screen):
 
 
 
-def supprime(screen,liste,coup,niveau):
-    rond = pygame.image.load('rondBois.png')
+def supprime(screen,liste,coup):
+    rond = pygame.image.load('ressources/img/rondBois.png')
     rond = pygame.transform.scale(rond,(50,50))
     L = len(liste)
     taille = 60*coup
     #supprime les couleurs (met un rond sur la derniere couleur posée)
     if L == 4:
-        if niveau == 1:
+        if Niveau.getNiveau() == 1:
             screen.blit(rond,(340,610-taille))
         else:
             screen.blit(rond,(340,490-taille))
         liste.pop(3)
     if L == 3:
-        if niveau == 1:
+        if Niveau.getNiveau() == 1:
             screen.blit(rond,(285,610-taille))
         else:
             screen.blit(rond,(285,490-taille))
         liste.pop(2)
     if L == 2:
-        if niveau == 1:
+        if Niveau.getNiveau() == 1:
             screen.blit(rond,(230,610-taille))
         else:
             screen.blit(rond,(230,490-taille))
         liste.pop(1)
     if L == 1:
-        if niveau == 1:
+        if Niveau.getNiveau() == 1:
             screen.blit(rond,(175,610-taille))
         else:
             screen.blit(rond,(175,490-taille))
@@ -187,11 +194,11 @@ def supprime(screen,liste,coup,niveau):
     pygame.display.flip()
     return liste
 
-def mettreCouleur(screen,liste,coup,couleur,niveau):
+def mettreCouleur(screen,liste,coup,couleur):
     L = len(liste)
     code = {'Rg' : (255,0,0), 'J':(255,255,0), 'Rs':(255,105,180), 'B':(0,0,255), 'N':(0,0,0), 'O':(255,165,0)}
     taille = 60*coup
-    if niveau == 1 or niveau == 2:
+    if Niveau.getNiveau() == 1 or Niveau.getNiveau() == 2:
         if couleur in liste:
             error(screen)
             return liste
@@ -201,25 +208,25 @@ def mettreCouleur(screen,liste,coup,couleur,niveau):
         return liste
     #fait apparaitre la couleur
     if L == 0:
-        if niveau == 1:
+        if Niveau.getNiveau() == 1:
             pygame.draw.ellipse(screen, code[couleur], (181, 615-taille, 40, 40))
         else:
             pygame.draw.ellipse(screen, code[couleur], (181, 495-taille, 40, 40))
         liste.append(couleur)
     elif L == 1:
-        if niveau == 1:
+        if Niveau.getNiveau() == 1:
             pygame.draw.ellipse(screen, code[couleur], (235, 615-taille, 40, 40))
         else:
             pygame.draw.ellipse(screen, code[couleur], (235, 495-taille, 40, 40))
         liste.append(couleur)
     elif L == 2:
-        if niveau == 1:
+        if Niveau.getNiveau() == 1:
             pygame.draw.ellipse(screen, code[couleur], (290, 615-taille, 40, 40))
         else:
             pygame.draw.ellipse(screen, code[couleur], (290, 495-taille, 40, 40))
         liste.append(couleur)
     elif L == 3:
-        if niveau == 1:
+        if Niveau.getNiveau() == 1:
             pygame.draw.ellipse(screen, code[couleur], (345, 615-taille, 40, 40))
         else:
             pygame.draw.ellipse(screen, code[couleur], (345, 495-taille, 40, 40))
@@ -227,31 +234,20 @@ def mettreCouleur(screen,liste,coup,couleur,niveau):
     pygame.display.flip()
     return liste
 
-def fenetreJeu(screen,niveau):
+def fenetreJeu(screen):
     pygame.display.set_caption('Mastermind : Jeu')
 
     font1 = pygame.font.SysFont('verdana', 20)
     blanc = (255,255,255)
     noir = (0,0,0)
-    pionJaune = pygame.image.load('jaune.png')
-    pionJaune = pygame.transform.scale(pionJaune,(50,70))
-    pionNoir = pygame.image.load('noir.png')
-    pionNoir = pygame.transform.scale(pionNoir,(60,80))
-    pionBleu = pygame.image.load('bleu.png')
-    pionBleu = pygame.transform.scale(pionBleu,(50,70))
-    pionOrange = pygame.image.load('orange.png')
-    pionOrange = pygame.transform.scale(pionOrange,(50,70))
-    pionRose = pygame.image.load('rose.png')
-    pionRose = pygame.transform.scale(pionRose,(60,65))
-    pionRouge = pygame.image.load('rouge.png')
-    pionRouge = pygame.transform.scale(pionRouge,(50,70))
-    bouton = pygame.image.load('bouton.png')
+
+    bouton = pygame.image.load('ressources/img/bouton.png')
     bouton = pygame.transform.scale(bouton,(170,80))
-    rond = pygame.image.load('rondBois.png')
+    rond = pygame.image.load('ressources/img/rondBois.png')
     rond = pygame.transform.scale(rond,(50,50))
-    rond1 = pygame.image.load('rondBoisClair.png')
+    rond1 = pygame.image.load('ressources/img/rondBoisClair.png')
     rond1 = pygame.transform.scale(rond1,(50,50))
-    rondFer = pygame.image.load('rondFer.png')
+    rondFer = pygame.image.load('ressources/img/rondFer.png')
     rondFer = pygame.transform.scale(rondFer,(50,50))
     menu = font1.render('Menu', 0, (0,0,0))
     confirmer = font1.render('Confirmer', 0, (0,0,0))
@@ -266,6 +262,8 @@ def fenetreJeu(screen,niveau):
     screen.blit(bouton, (660, 620))
     screen.blit(bouton, (490, 620))
 
+    ControleurGen.afficherCouleurs()
+
     #fait apparaitre les ronds
     for i in range(4):
         screen.blit(rond1,((175+(55*i)),10))
@@ -274,7 +272,7 @@ def fenetreJeu(screen,niveau):
         for j in range(8):
             screen.blit(rond,((175+(i*55)),(70+(j*60))))
 
-    if niveau == 1:
+    if Niveau.getNiveau() == 1:
         for  i in range(4):
             for j in range(2):
                 screen.blit(rond,((175+(55*i)),(550+(60*j))))
@@ -284,20 +282,13 @@ def fenetreJeu(screen,niveau):
     screen.blit(confirmer,(695,645))
     screen.blit(abandonner,(515,645))
 
-    if niveau == 1:
+    if Niveau.getNiveau() == 1:
         screen.blit(niveau1,(510,20))
-    elif niveau == 2:
+    elif Niveau.getNiveau() == 2:
         screen.blit(niveau2,(510,20))
     else:
         screen.blit(niveau3,(510,20))
 
-    #fait apparaitre les pions de couleurs
-    screen.blit(pionRouge,(650,70))
-    screen.blit(pionRose,(700,150))
-    screen.blit(pionOrange,(650,230))
-    screen.blit(pionBleu,(705,310))
-    screen.blit(pionNoir,(650,380))
-    screen.blit(pionJaune,(705,480))
     screen.blit(rondFer,(800,250))
 
     #3 lignes pour l'endroit où le code secret apparaitra
@@ -315,7 +306,7 @@ def fin(screen, code_secret, win):
     code = {'Rg' : (255,0,0), 'J':(255,255,0), 'Rs':(255,105,180), 'B':(0,0,255), 'N':(0,0,0), 'O':(255,165,0)}
     font = pygame.font.SysFont('impact', 100)
 
-    rond1 = pygame.image.load('rondBoisClair.png')
+    rond1 = pygame.image.load('ressources/img/rondBoisClair.png')
     rond1 = pygame.transform.scale(rond1,(50,50))
     perdu = font.render('Perdu !', 0, (255,0,0))
     gagne = font.render('Gagné !', 0, (0,255,0))
@@ -339,14 +330,14 @@ def fin(screen, code_secret, win):
         pygame.display.flip()
         return 'abandonne'
 
-def consignes(screen,niveau):
+def consignes(screen):
     pygame.display.set_caption('Mastermind : Consignes')
 
     blanc = (255,255,255)
     noir = (0,0,0)
     font =  pygame.font.SysFont('impact', 50)
     font1 = pygame.font.SysFont('verdana', 20)
-    bouton = pygame.image.load('bouton.png')
+    bouton = pygame.image.load('ressources/img/bouton.png')
     bouton = pygame.transform.scale(bouton,(170,80))
 
     suivant = font1.render('Suivant',0,(0,0,0))
@@ -378,17 +369,17 @@ def consignes(screen,niveau):
     screen.blit(menu,(717,645))
 
     #fait apparaitre les consignes en fonction du niveau
-    if niveau == 1:
+    if Niveau.getNiveau() == 1:
         screen.blit(consigne1,(300,10))
         screen.blit(textUnique,(60,335))
         screen.blit(textInterdis,(80,365))
         screen.blit(textEssais1,(60,395))
-    if niveau == 2:
+    if Niveau.getNiveau() == 2:
         screen.blit(consigne2,(300,10))
         screen.blit(textUnique,(60,335))
         screen.blit(textInterdis,(80,365))
         screen.blit(textEssais2,(60,395))
-    if niveau == 3:
+    if Niveau.getNiveau() == 3:
         screen.blit(consigne3,(300,10))
         screen.blit(textDouble,(60,335))
         screen.blit(textDouble1,(80,365))
@@ -408,9 +399,10 @@ def consignes(screen,niveau):
 
 def jeu():
     #initialise le jeu
-    screen = pygame.display.set_mode((1000, 700))
+    screen = Screen().getScreen()
     jouer = True
-    niveau = 0
+    finPartie = "None"
+    niveau = Niveau.getNiveau()
     accueil(screen)
     couleurs = []
     coups = 0
@@ -426,77 +418,78 @@ def jeu():
                 #donne la position du curseur
                 mouse = pygame.mouse.get_pos()
                 #si le joueur est dans le menu
-                if niveau == 0:
+                if Niveau.getNiveau() is None:
                     if 410 < mouse[0] < 580 and 140 < mouse[1] < 220:
-                        niveau = 1
-                        consignes(screen,niveau)
-                        code_secret = genererCode(4, niveau)
+                        Niveau.setNiveauActuel(Niveau1())
+                        consignes(screen)
+                        code_secret = genererCode(4)
                     elif 410 < mouse[0] < 580 and 280 < mouse[1] < 360:
-                        niveau = 2
-                        consignes(screen,niveau)
-                        code_secret = genererCode(4, niveau)
+                        Niveau.setNiveauActuel(Niveau2())
+                        consignes(screen)
+                        code_secret = genererCode(4)
                     elif 410 < mouse[0] < 580 and 420 < mouse[1] < 500:
-                        niveau = 3
-                        consignes(screen,niveau)
-                        code_secret = genererCode(4, niveau)
-                elif niveau == 1 or niveau == 2 or niveau == 3:
+                        Niveau.setNiveauActuel(Niveau3())
+                        consignes(screen)
+                        code_secret = genererCode(4)
+                elif Niveau.getNiveau() == 1 or Niveau.getNiveau() == 2 or Niveau.getNiveau() == 3:
                     #si le joueur est sur les cansignes
                     if consigne == False:
                         #touche suivant
                         if 830 < mouse[0] < 1000 and 620 < mouse[1] < 700:
-                            fenetreJeu(screen,niveau)
+                            fenetreJeu(screen)
                             consigne = True
                         #touche menu
                         elif 660 < mouse[0] < 830 and 620 < mouse[1] < 700:
                             couleurs = []
-                            niveau = 0
+                            Niveau.setNiveauActuel(None)
                             accueil(screen)
                     #sinon si le joueur est sur la fenetre de jeu
                     #touche menu
                     elif 830 < mouse[0] < 1000 and 620 < mouse[1] < 700:
                         couleurs = []
-                        niveau = 0
+                        Niveau.setNiveauActuel(None)
                         coups = 0
                         consigne = False
                         accueil(screen)
                     #touche abandonne
                     elif 490 < mouse[0] < 660 and 620 < mouse[1] < 700:
-                        niveau = fin(screen,code_secret,False)
+                        finPartie = fin(screen,code_secret,False)
                     #touche confirmer
                     elif 660 < mouse[0] < 830 and 620 < mouse[1] < 700:
-                        niveau = evaluer_proposition(screen, couleurs, coups, niveau,code_secret)
+                        finPartie = evaluer_proposition(screen, couleurs, coups,code_secret)
                         if len(couleurs) == 4:
                             coups += 1
                             couleurs = []
                     #pour chaque pion de couleur choisi
                     elif 800 < mouse[0] < 850 and 250 < mouse[1] < 300:
-                        couleurs = supprime(screen,couleurs,coups,niveau)
+                        couleurs = supprime(screen,couleurs,coups)
                     elif 650 < mouse[0] < 700 and 70 < mouse[1] < 150:
-                        couleurs = mettreCouleur(screen,couleurs,coups,'Rg',niveau)
+                        couleurs = mettreCouleur(screen,couleurs,coups,'Rg')
                     elif 705 < mouse[0] < 755 and 480 < mouse[1] < 550:
-                        couleurs = mettreCouleur(screen,couleurs,coups,'J',niveau)
+                        couleurs = mettreCouleur(screen,couleurs,coups,'J')
                     elif 700 < mouse[0] < 760 and 150 < mouse[1] < 215:
-                        couleurs = mettreCouleur(screen,couleurs,coups,'Rs',niveau)
+                        couleurs = mettreCouleur(screen,couleurs,coups,'Rs')
                     elif 650 < mouse[0] < 700 and 230 < mouse[1] < 300:
-                        couleurs = mettreCouleur(screen,couleurs,coups,'O',niveau)
+                        couleurs = mettreCouleur(screen,couleurs,coups,'O')
                     elif 705 < mouse[0] < 755 and 310 < mouse[1] < 380:
-                        couleurs = mettreCouleur(screen,couleurs,coups,'B',niveau)
+                        couleurs = mettreCouleur(screen,couleurs,coups,'B')
                     elif 650 < mouse[0] < 710 and 380 < mouse[1] < 460:
-                        couleurs = mettreCouleur(screen,couleurs,coups,'N',niveau)
+                        couleurs = mettreCouleur(screen,couleurs,coups,'N')
                 #si le jouer a perdu/abandoné/gagné, le jeueur peut que aller dans le menu
-                elif niveau == 'abandonne' or niveau == 'gagne':
+                elif finPartie == 'abandonne' or finPartie == 'gagne':
                     if 830 < mouse[0] < 1000 and 620 < mouse[1] < 700:
                         couleurs = []
-                        niveau = 0
+                        Niveau.setNiveauActuel(None)
+                        finPartie = None
                         coups = 0
                         accueil(screen)
                         consigne = False
             #si le joueur ne réussis au bout des coups maximum, le joueur perd
-            elif niveau == 1:
+            elif Niveau.getNiveau() == 1:
                 if coups == 10:
-                    fin(screen,code_secret,False )
-            elif niveau == 2 or niveau == 3:
+                    finPartie = fin(screen,code_secret,False )
+            elif Niveau.getNiveau() == 2 or Niveau.getNiveau() == 3:
                 if coups == 8:
-                    fin(screen,code_secret,False )
+                    finPartie = fin(screen,code_secret,False )
 
 jeu()
