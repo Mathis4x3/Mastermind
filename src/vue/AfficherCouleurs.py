@@ -1,6 +1,6 @@
 import pygame
 
-class afficherCouleurs():
+class AfficherCouleurs():
 
     @staticmethod
     def afficher(screen):

@@ -1,5 +1,6 @@
 from src.object.Screen import Screen
-from src.vue.afficherCouleurs import afficherCouleurs
+from src.vue.AfficherCouleurs import AfficherCouleurs
+from src.vue.AfficherErreur import AfficherErreur
 
 
 class ControleurGen:
@@ -7,4 +8,10 @@ class ControleurGen:
     @staticmethod
     def afficherCouleurs():
         screen = Screen().getScreen()
-        afficherCouleurs().afficher(screen)
+        AfficherCouleurs().afficher(screen)
+
+    @staticmethod
+    def afficherErreur():
+        screen = Screen().getScreen()
+        AfficherErreur().error(screen)
+        Screen.setScreen(screen)

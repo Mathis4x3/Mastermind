@@ -8,7 +8,10 @@ class Screen:
 
     @staticmethod
     def getScreen():
-        if Screen.instance == None:
+        if Screen.instance is None:
             Screen.instance = pygame.display.set_mode((Screen.width, Screen.height))
         return Screen.instance
 
+    @staticmethod
+    def setScreen(screen):
+        Screen.instance = screen
