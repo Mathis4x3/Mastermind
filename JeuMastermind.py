@@ -5,84 +5,47 @@ import time
 import sys
 from pygame.locals import *
 
-from src.controleur.ControleurGen import ControleurGen
+from src.controleur.ControleurCode import ControleurCode
+from src.controleur.ControleurCouleurs import ControleurGen
+from src.object.Code.Code import Code
 from src.object.Niveaux.Niveau import Niveau
 from src.object.Niveaux.Niveau1 import Niveau1
 from src.object.Niveaux.Niveau2 import Niveau2
 from src.object.Niveaux.Niveau3 import Niveau3
 from src.object.Screen import Screen
+from src.object.data.Couleur import Couleur
 
 pygame.init()
 
-def error(screen):
-    #fait apparaitre le triangle erreur
-    pygame.draw.line(screen,(255,0,0),(500,200),(600,400),2)
-    pygame.draw.line(screen,(255,0,0),(600,400),(400,400),2)
-    pygame.draw.line(screen,(255,0,0),(400,400),(500,200),2)
-    pygame.draw.line(screen,(255,0,0),(500,250),(500,360), 5)
-    pygame.draw.ellipse(screen, (255,0,0), (485, 365, 30, 30))
-    pygame.display.flip()
-    time.sleep(1/4) #le laisse pendant un court moment pour que le joueur ai le temps de voir le triangle
-    #puis le fait disparaitre
-    pygame.draw.line(screen,(255,255,255),(500,200),(600,400),2)
-    pygame.draw.line(screen,(255,255,255),(600,400),(400,400),2)
-    pygame.draw.line(screen,(255,255,255),(400,400),(500,200),2)
-    pygame.draw.line(screen,(255,255,255),(500,250),(500,360), 5)
-    pygame.draw.ellipse(screen, (255,255,255), (485, 365, 30, 30))
-    pygame.display.flip()
-
 #genere le code secret en fonction des parametres
-def genererCode(longueur):
-    couleurs = ['Rg', 'O', 'J', 'Rs', 'B', 'N']
-    code_secret = []
-    couleurComptage = {}
-    temp = False
-    comptage = 0
-    if Niveau.getNiveau() == 3: #les couleurs se répètent car niveau 3
-        while comptage != 4:
-            couleur = random.choice(couleurs)
-            if couleur in couleurComptage:
-                if temp == False:
-                    code_secret.append(couleur)
-                    comptage += 1
-                    temp = True
-                else :
-                    couleurs.remove(couleur)
-            else:
-                couleurComptage[couleur] = 1
-                code_secret.append(couleur)
-                comptage += 1
-    else: #les couleurs ne se répètent pas
-        for i in range(longueur):
-            couleur = random.choice(couleurs)
-            code_secret.append(couleur)
-            couleurs.remove(couleur)
-    print(code_secret)
-    return code_secret
+def genererCodeSecret():
+    code = ControleurCode.genererCodeAleatoire()
+    return code
 
 def evaluer_proposition(liste, coup, code_secret):
     screen = Screen().getScreen()
     # si il n'y a pas 4 couleurs dans la proposition du joueur
-    if len(liste) != 4:
+    L = liste.getTaille()
+    if L != 4:
         ControleurGen.afficherErreur()
         return Niveau.getNiveau()
     bien_places = 0
     mal_places = 0
-    code_secret1 = list(code_secret)
-    liste1 = list(liste)
-    for i in range(len(liste)):
-        if liste[i] == code_secret[i]:
+    code_secret1 = code_secret.cloner()
+    liste1 = liste.cloner()
+    for i in range(4):
+        if liste.getCouleur(i) == code_secret.getCouleur(i):
             bien_places += 1
-            code_secret1.remove(liste[i])
-            liste1.remove(liste[i])
-    for j in range(len(liste1)):
-        if liste1[j] in code_secret1:
+            code_secret1.remplacerParNull(i)
+            liste1.remplacerParNull(i)
+    for j in range(4):
+        if (liste1.getCouleur(j) is not None) and (code_secret1.contient(liste1.getCouleur(j))) :
             mal_places += 1
             trouvé = None
             y = 0
             while trouvé is None:
-                if liste1[j] == code_secret1[y]:
-                    code_secret1.remove(liste1[j])
+                if liste1.getCouleur(j) == code_secret1.getCouleur(y):
+                    code_secret1.remplacerParNull(y)
                     trouvé = 1
                 y += 1
 
@@ -118,9 +81,10 @@ def evaluer_proposition(liste, coup, code_secret):
 
     pygame.display.flip()
 
+    finPartie = None
     if bien_places == 4:
-        Niveau.setNiveauActuel(fin(code_secret,True))
-    return Niveau.getNiveau()
+        finPartie = fin(code_secret,True)
+    return finPartie
 
 
 def accueil():
@@ -167,7 +131,7 @@ def supprime(liste,coup):
     screen = Screen().getScreen()
     rond = pygame.image.load('ressources/img/rondBois.png')
     rond = pygame.transform.scale(rond,(50,50))
-    L = len(liste)
+    L = liste.getTaille()
     taille = 60*coup
     #supprime les couleurs (met un rond sur la derniere couleur posée)
     if L == 4:
@@ -175,35 +139,31 @@ def supprime(liste,coup):
             screen.blit(rond,(340,610-taille))
         else:
             screen.blit(rond,(340,490-taille))
-        liste.pop(3)
     if L == 3:
         if Niveau.getNiveau() == 1:
             screen.blit(rond,(285,610-taille))
         else:
             screen.blit(rond,(285,490-taille))
-        liste.pop(2)
     if L == 2:
         if Niveau.getNiveau() == 1:
             screen.blit(rond,(230,610-taille))
         else:
             screen.blit(rond,(230,490-taille))
-        liste.pop(1)
     if L == 1:
         if Niveau.getNiveau() == 1:
             screen.blit(rond,(175,610-taille))
         else:
             screen.blit(rond,(175,490-taille))
-        liste.pop(0)
+    liste.enleverDerniereCouleur()
     pygame.display.flip()
     return liste
 
 def mettreCouleur(liste,coup,couleur):
     screen = Screen().getScreen()
-    L = len(liste)
-    code = {'Rg' : (255,0,0), 'J':(255,255,0), 'Rs':(255,105,180), 'B':(0,0,255), 'N':(0,0,0), 'O':(255,165,0)}
+    L = liste.getTaille()
     taille = 60*coup
     if Niveau.getNiveau() == 1 or Niveau.getNiveau() == 2:
-        if couleur in liste:
+        if liste.contient(couleur):
             ControleurGen.afficherErreur()
             return liste
     #si le joueur souhaite mettre une couleur alors qu'il y en a deja 4, affiche erreur
@@ -211,30 +171,28 @@ def mettreCouleur(liste,coup,couleur):
         ControleurGen.afficherErreur()
         return liste
     #fait apparaitre la couleur
-    if L == 0:
-        if Niveau.getNiveau() == 1:
-            pygame.draw.ellipse(screen, code[couleur], (181, 615-taille, 40, 40))
-        else:
-            pygame.draw.ellipse(screen, code[couleur], (181, 495-taille, 40, 40))
-        liste.append(couleur)
-    elif L == 1:
-        if Niveau.getNiveau() == 1:
-            pygame.draw.ellipse(screen, code[couleur], (235, 615-taille, 40, 40))
-        else:
-            pygame.draw.ellipse(screen, code[couleur], (235, 495-taille, 40, 40))
-        liste.append(couleur)
-    elif L == 2:
-        if Niveau.getNiveau() == 1:
-            pygame.draw.ellipse(screen, code[couleur], (290, 615-taille, 40, 40))
-        else:
-            pygame.draw.ellipse(screen, code[couleur], (290, 495-taille, 40, 40))
-        liste.append(couleur)
-    elif L == 3:
-        if Niveau.getNiveau() == 1:
-            pygame.draw.ellipse(screen, code[couleur], (345, 615-taille, 40, 40))
-        else:
-            pygame.draw.ellipse(screen, code[couleur], (345, 495-taille, 40, 40))
-        liste.append(couleur)
+    else :
+        if L == 0:
+            if Niveau.getNiveau() == 1:
+                pygame.draw.ellipse(screen, couleur.value, (181, 615-taille, 40, 40))
+            else:
+                pygame.draw.ellipse(screen, couleur.value, (181, 495-taille, 40, 40))
+        elif L == 1:
+            if Niveau.getNiveau() == 1:
+                pygame.draw.ellipse(screen, couleur.value, (235, 615-taille, 40, 40))
+            else:
+                pygame.draw.ellipse(screen, couleur.value, (235, 495-taille, 40, 40))
+        elif L == 2:
+            if Niveau.getNiveau() == 1:
+                pygame.draw.ellipse(screen, couleur.value, (290, 615-taille, 40, 40))
+            else:
+                pygame.draw.ellipse(screen, couleur.value, (290, 495-taille, 40, 40))
+        elif L == 3:
+            if Niveau.getNiveau() == 1:
+                pygame.draw.ellipse(screen, couleur.value, (345, 615-taille, 40, 40))
+            else:
+                pygame.draw.ellipse(screen, couleur.value, (345, 495-taille, 40, 40))
+        liste.ajouterCouleur(couleur)
     pygame.display.flip()
     return liste
 
@@ -322,8 +280,8 @@ def fin(code_secret, win):
         screen.blit(rond1,(175+(i*55),10))
 
     #fait apparaitre le code secret
-    for couleur in code_secret:
-        pygame.draw.ellipse(screen, code[code_secret[temp]], (distance, 15, 40, 40))
+    for couleur in code_secret.couleurs:
+        pygame.draw.ellipse(screen, couleur.value, (distance, 15, 40, 40))
         distance += 55
         temp += 1
 
@@ -410,7 +368,7 @@ def jeu():
     finPartie = "None"
     niveau = Niveau.getNiveau()
     accueil()
-    couleurs = []
+    couleurs = Code()
     coups = 0
     consigne = False
     while jouer:
@@ -428,15 +386,15 @@ def jeu():
                     if 410 < mouse[0] < 580 and 140 < mouse[1] < 220:
                         Niveau.setNiveauActuel(Niveau1())
                         consignes()
-                        code_secret = genererCode(4)
+                        code_secret = genererCodeSecret()
                     elif 410 < mouse[0] < 580 and 280 < mouse[1] < 360:
                         Niveau.setNiveauActuel(Niveau2())
                         consignes()
-                        code_secret = genererCode(4)
+                        code_secret = genererCodeSecret()
                     elif 410 < mouse[0] < 580 and 420 < mouse[1] < 500:
                         Niveau.setNiveauActuel(Niveau3())
                         consignes()
-                        code_secret = genererCode(4)
+                        code_secret = genererCodeSecret()
                 elif Niveau.getNiveau() == 1 or Niveau.getNiveau() == 2 or Niveau.getNiveau() == 3:
                     #si le joueur est sur les cansignes
                     if consigne == False:
@@ -446,13 +404,13 @@ def jeu():
                             consigne = True
                         #touche menu
                         elif 660 < mouse[0] < 830 and 620 < mouse[1] < 700:
-                            couleurs = []
+                            couleurs.vider()
                             Niveau.setNiveauActuel(None)
                             accueil()
                     #sinon si le joueur est sur la fenetre de jeu
                     #touche menu
                     elif 830 < mouse[0] < 1000 and 620 < mouse[1] < 700:
-                        couleurs = []
+                        couleurs.vider()
                         Niveau.setNiveauActuel(None)
                         coups = 0
                         consigne = False
@@ -462,25 +420,25 @@ def jeu():
                         finPartie = fin(code_secret,False)
                     #touche confirmer
                     elif 660 < mouse[0] < 830 and 620 < mouse[1] < 700:
-                        finPartie = evaluer_proposition(couleurs, coups,code_secret)
-                        if len(couleurs) == 4:
+                        if couleurs.getTaille() == 4:
+                            finPartie = evaluer_proposition(couleurs, coups,code_secret)
                             coups += 1
-                            couleurs = []
+                            couleurs.vider()
                     #pour chaque pion de couleur choisi
                     elif 800 < mouse[0] < 850 and 250 < mouse[1] < 300:
                         couleurs = supprime(couleurs,coups)
                     elif 650 < mouse[0] < 700 and 70 < mouse[1] < 150:
-                        couleurs = mettreCouleur(couleurs,coups,'Rg')
+                        couleurs = mettreCouleur(couleurs,coups,Couleur.ROUGE)
                     elif 705 < mouse[0] < 755 and 480 < mouse[1] < 550:
-                        couleurs = mettreCouleur(couleurs,coups,'J')
+                        couleurs = mettreCouleur(couleurs,coups,Couleur.JAUNE)
                     elif 700 < mouse[0] < 760 and 150 < mouse[1] < 215:
-                        couleurs = mettreCouleur(couleurs,coups,'Rs')
+                        couleurs = mettreCouleur(couleurs,coups,Couleur.ROSE)
                     elif 650 < mouse[0] < 700 and 230 < mouse[1] < 300:
-                        couleurs = mettreCouleur(couleurs,coups,'O')
+                        couleurs = mettreCouleur(couleurs,coups,Couleur.ORANGE)
                     elif 705 < mouse[0] < 755 and 310 < mouse[1] < 380:
-                        couleurs = mettreCouleur(couleurs,coups,'B')
+                        couleurs = mettreCouleur(couleurs,coups,Couleur.BLEU)
                     elif 650 < mouse[0] < 710 and 380 < mouse[1] < 460:
-                        couleurs = mettreCouleur(couleurs,coups,'N')
+                        couleurs = mettreCouleur(couleurs,coups,Couleur.NOIR)
                 #si le jouer a perdu/abandoné/gagné, le jeueur peut que aller dans le menu
                 elif finPartie == 'abandonne' or finPartie == 'gagne':
                     if 830 < mouse[0] < 1000 and 620 < mouse[1] < 700:

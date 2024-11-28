@@ -17,3 +17,8 @@ class NiveauGen(ABC):
     def getNiveau():
         ...
 
+    @staticmethod
+    @abstractmethod
+    def getTypeGenererCode():
+        ...
+

@@ -1,10 +1,14 @@
+from src.object.Code.GenererCode import GenererCode
 from src.object.Niveaux.Niveau1 import Niveau1
 from src.object.Niveaux.NiveauGen import NiveauGen
 
 
 class Niveau(NiveauGen):
-
     niveauActuel = None
+
+    @staticmethod
+    def getTypeGenererCode():
+        return Niveau.niveauActuel.getTypeGenererCode()
 
     @staticmethod
     def getNiveau():
@@ -14,7 +18,7 @@ class Niveau(NiveauGen):
 
     @staticmethod
     def getTentative():
-        return Niveau.niveauActuel.getNiveau()
+        return Niveau.niveauActuel.getTentative()
 
     @staticmethod
     def estDoubleCouleur():
